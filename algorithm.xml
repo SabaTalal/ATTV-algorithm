@@ -1,0 +1,57 @@
+sample input:
+- timestamp (2020-02-09T07:51:48.715+03:00)
+- lat (24.7583545)
+- lng (46.6624199)
+- userID (xxxxxxxxxx)
+- IMSI (420017307601939) - mobile number
+
+HAPPY SCINARIO
+
+get the user location at t1 (ul@t1)
+send location data to MOT to retreive the street name, the direction of the user and the speed limit (sl) of that location
+
+{data regarding the location will be cached for next user in the same street}
+
+the system gets the user location at t2 (ul@t2)
+>validates the direction (!U turn)
+>validates the street is still the same (!turn)
+the system will calculate the distance (d) between (ul@t1 and ul@t2)
+%formula: haversine%
+the system will calculate the user speed (us) us = d / (t2 - t1)
+if (us > [sl + %thershold%]): we will only flag the user for the next record
+
+the speed ticket will only be issued if the user collected X number of sequential flags
+
+
+edge cases:
+* the user is in a different street > update the speed limit for each record
+* streets with different limit for each direction > update with every record for higher accuracy 
+* checking users in the same car
+
+if the user received a ticket 
+send MobileNumber and initiate MOI ticketing service "assuming an exposed API"
+
+
+{
+%haversine%
+
+Haversine
+formula:	a = sin²(Δφ/2) + cos φ1 ⋅ cos φ2 ⋅ sin²(Δλ/2)
+c = 2 ⋅ atan2( √a, √(1−a) )
+d = R ⋅ c
+where	φ is latitude, λ is longitude, R is earth’s radius (mean radius = 6,371km);
+note that angles need to be in radians to pass to trig functions!
+JavaScript:	
+var R = 6371e3; // metres
+var φ1 = lat1.toRadians();
+var φ2 = lat2.toRadians();
+var Δφ = (lat2-lat1).toRadians();
+var Δλ = (lon2-lon1).toRadians();
+
+var a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+        Math.cos(φ1) * Math.cos(φ2) *
+        Math.sin(Δλ/2) * Math.sin(Δλ/2);
+var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+
+var d = R * c;
+}
